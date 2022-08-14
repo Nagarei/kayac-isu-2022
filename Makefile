@@ -240,3 +240,9 @@ discocat-now-status:
 check-commit:
 	mkdir -p tmp/check-commit
 	go run tool-config/check-commit/main.go
+
+.PHONY: run-bench
+run-bench:
+	mkdir -p tmp/bench-log
+	cd bench && ./bench -target-url http://localhost:80 > ~/tmp/bench-log/bench-log
+	cat ~/tmp/bench-log/bench-log | discocat
