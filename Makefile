@@ -18,7 +18,7 @@ DB_SLOW_LOG:=/var/log/mysql/mysql-slow.log
 
 # http://localhost:19999/netdata.confのdirectories.webで確認可能
 NETDATA_WEBROOT_PATH:=/var/lib/netdata/www
-NETDATA_CUSTUM_HTML:=tool-config/netdata/isucon.html
+NETDATA_CUSTUM_HTML:=tool-config/netdata/*
 
 DISCOCAT_TRIPLE_BACK_QUOTES:=tool-config/discocat/triple-back-quotes.txt
 DISCOCAT_TMPFILE:=tmp/discocat
@@ -215,7 +215,7 @@ watch-service-log:
 
 .PHONY: netdata-setup
 netdata-setup:
-	sudo cp $(NETDATA_CUSTUM_HTML) $(NETDATA_WEBROOT_PATH)/isucon.html
+	sudo cp $(NETDATA_CUSTUM_HTML) $(NETDATA_WEBROOT_PATH)/
 
 .PHONY: $(DISCOCAT_TMPFILE)
 refresh-descocat-tmp:
