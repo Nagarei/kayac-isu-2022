@@ -76,6 +76,7 @@
     ></div>
 
     <h1>Time-series Metrics</h1>
+    <h2>Systemd Service</h2>
     <!-- systemd serviceの時系列メトリクス -->
     <div data-netdata="services.cpu"
         data-chart-library="dygraph"
@@ -104,6 +105,26 @@
         data-legend-position="bottom"
         class="netdata-container-with-legend netdata-container-with-legend--bottom"
     ></div>
+
+    <h2>System</h2>
+    <div data-netdata="system.cpu"
+    data-chart-library="dygraph"
+    data-height="250"
+    data-decimal-digits="-1"
+    data-dygraph-valuerange="[0, 100]"
+    data-legend-position="bottom"
+    class="netdata-container-with-legend netdata-container-with-legend--bottom"
+    ></div>
+
+    <div data-netdata="system.ram"
+    data-chart-library="dygraph"
+    data-height="250"
+    data-legend-position="bottom"
+    data-dimensions="used|buffers|active|wired"
+    class="netdata-container-with-legend netdata-container-with-legend--bottom"
+    ></div>
+
+
     <div data-netdata="system.io"
         data-chart-library="dygraph"
         data-width="100%"
