@@ -89,10 +89,10 @@ func main() {
 	}()
 
 	e := echo.New()
-	e.Debug = true
-	e.Logger.SetLevel(log.DEBUG)
+	e.Debug = false
+	e.Logger.SetLevel(log.ERROR)
 
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(cacheControllPrivate)
 
@@ -120,11 +120,11 @@ func main() {
 
 	e.POST("/initialize", initializeHandler)
 
-	e.GET("/cache_metrics/rp", func(c echo.Context) error {
+	e.GET("/cache_stas/rp", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, cacheRP.Stats())
 	})
 
-	e.GET("/cache_metrics/pp", func(c echo.Context) error {
+	e.GET("/cache_stats/pp", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, cachePP.Stats())
 	})
 
