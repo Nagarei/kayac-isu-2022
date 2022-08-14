@@ -229,6 +229,7 @@ discocat-now-status:
 	echo "----------------------------------------------------------------" >> $(DISCOCAT_TMPFILE)
 	cat $(DISCOCAT_TRIPLE_BACK_QUOTES) >> $(DISCOCAT_TMPFILE)
 	echo "SERVER_ID: $(SERVER_ID)" >> $(DISCOCAT_TMPFILE)
+	git branch --contains=HEAD >> $(DISCOCAT_TMPFILE)
 	TZ=JST-9 date >> $(DISCOCAT_TMPFILE)
 	echo "" >> $(DISCOCAT_TMPFILE)
 	git show -s >> $(DISCOCAT_TMPFILE)
