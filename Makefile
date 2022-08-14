@@ -244,7 +244,7 @@ check-commit:
 .PHONY: run-bench
 run-bench:
 	mkdir -p tmp/bench-log
-	cd bench && ./bench -target-url http://localhost:80 > ~/tmp/bench-log/bench-log
+	-@cd bench && ./bench -target-url http://localhost:80 > ~/tmp/bench-log/bench-log
 	@make refresh-descocat-tmp
 	cat $(DISCOCAT_TRIPLE_BACK_QUOTES) >> $(DISCOCAT_TMPFILE)
 	echo "" >> $(DISCOCAT_TMPFILE)
