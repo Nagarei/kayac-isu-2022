@@ -39,7 +39,16 @@ deploy-conf: check-server-id deploy-db-conf deploy-nginx-conf deploy-service-fil
 
 # ベンチマークを走らせる直前に実行する
 .PHONY: bench
-bench: check-server-id discocat-now-status rm-logs deploy-conf restart watch-service-log
+bench: check-server-id discocat-now-status rm-logs deploy-kayac watch-log-kayac
+# bench: check-server-id discocat-now-status rm-logs deploy-conf restart watch-service-log
+
+.PHONY: deploy-kayac
+deploy-kayac:
+	docker-compose up --build -d -f webapp/docker-compose.yml
+
+.PHONY: watch-log-kayac
+watch-log-kayac:
+	docker logs webapp-app-1 -f
 
 # slow queryを確認する
 .PHONY: slow-query
