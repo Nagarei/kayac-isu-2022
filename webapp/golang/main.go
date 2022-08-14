@@ -1811,7 +1811,7 @@ func initializeHandler(c echo.Context) error {
 		"CREATE TRIGGER `insert_after_update_favorite_count` AFTER INSERT ON `playlist_favorite` FOR EACH ROW "+
 			"INSERT INTO `triggered_favorite_count` (`playlist_id`, `count`) "+
 			"SELECT `pf`.`playlist_id`, count(*) AS `count` FROM `playlist_favorite` AS `pf` WHERE `pf`.`playlist_id` = NEW.`playlist_id` GROUP BY `pf`.`playlist_id` "+
-			"ON DUPLICATE KEY UPDATE `playlist_id` = VALUES(`playlist_id`);",
+			"ON DUPLICATE KEY UPDATE `playlist_id` = VALUES(`playlist_id`)",
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
 		return errorResponse(c, 500, "internal server error")
@@ -1830,7 +1830,15 @@ func initializeHandler(c echo.Context) error {
 		"CREATE TRIGGER `delete_after_update_favorite_count` AFTER INSERT ON `playlist_favorite` FOR EACH ROW "+
 			"INSERT INTO `triggered_favorite_count` (`playlist_id`, `count`) "+
 			"SELECT `pf`.`playlist_id`, count(*) AS `count` FROM `playlist_favorite` AS `pf` WHERE `pf`.`playlist_id` = NEW.`playlist_id` GROUP BY `pf`.`playlist_id` "+
-			"ON DUPLICATE KEY UPDATE `playlist_id` = VALUES(`playlist_id`);",
+			"ON DUPLICATE KEY UPDATE `playlist_id` = VALUES(`playlist_id`)",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		`INSERT INTO triggered_favorite_count SELECT playlist_id, count(*) AS count FROM playlist_favorite GROUP BY playlist_id`,
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
 		return errorResponse(c, 500, "internal server error")
