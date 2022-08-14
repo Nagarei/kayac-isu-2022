@@ -1940,7 +1940,7 @@ func initializeHandler(c echo.Context) error {
 	}
 	if _, err := conn.ExecContext(
 		ctx,
-		"CREATE TABLE favorite_count (`playlist_id` varchar(191) NOT NULL, `count` int NOT NULL,"+
+		"CREATE TABLE favorite_count (`playlist_id` varchar(30) NOT NULL, `count` int NOT NULL,"+
 			"	PRIMARY KEY (`playlist_id`), KEY `idx_count` (`count` DESC))",
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
