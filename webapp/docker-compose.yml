@@ -44,7 +44,7 @@ services:
       - ../sql:/docker-entrypoint-initdb.d
       - mysql:/var/lib/mysql
       - ./mysql/my.cnf:/etc/my.cnf
-      - ./mysql/logs:/var/log/mysql
+      - /var/log/mysql:/var/log/mysql
     ports:
       - 13306:3306
     restart: always
