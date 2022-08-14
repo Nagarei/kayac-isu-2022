@@ -1483,11 +1483,6 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		c.Logger().Errorf("error tx.Commit: %s", err)
-		return errorResponse(c, 500, "internal server error")
-	}
-
 	playlistDetails, err := getPlaylistDetailByPlaylistULID(ctx, tx, playlist.ULID, &userAccount)
 	if err != nil {
 		c.Logger().Errorf("error getPlaylistDetailByPlaylistULID: %s", err)
@@ -1495,6 +1490,11 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 	}
 	if playlistDetails == nil {
 		return errorResponse(c, 500, "error occured: getPlaylistDetailByPlaylistULID")
+	}
+
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
 	}
 
 	body := SinglePlaylistResponse{
