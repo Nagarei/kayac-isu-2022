@@ -23,6 +23,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/srinathgs/mysqlstore"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/sync/singleflight"
 
 	_ "net/http/pprof"
 
@@ -1015,6 +1016,8 @@ func apiLogoutHandler(c echo.Context) error {
 	return nil
 }
 
+var sfGroupRP singleflight.Group
+
 // GET /api/recent_playlists
 
 func apiRecentPlaylistsHandler(c echo.Context) error {
@@ -1029,34 +1032,46 @@ func apiRecentPlaylistsHandler(c echo.Context) error {
 		userAccount = _account.(string)
 	}
 
-	ctx := c.Request().Context()
-	conn, err := db.Connx(ctx)
-	if err != nil {
-		c.Logger().Errorf("error db.Conn: %s", err)
-		return errorResponse(c, 500, "internal server error")
-	}
-	defer conn.Close()
+	v, err, _ := sfGroupRP.Do(userAccount, func() (interface{}, error) {
+		ctx := c.Request().Context()
+		conn, err := db.Connx(ctx)
+		if err != nil {
+			c.Logger().Errorf("error db.Conn: %s", err)
+			return nil, errorResponse(c, 500, "internal server error")
+		}
+		defer conn.Close()
 
-	playlists, err := getRecentPlaylistSummaries(ctx, conn, userAccount)
+		playlists, err := getRecentPlaylistSummaries(ctx, conn, userAccount)
+		if err != nil {
+			c.Logger().Errorf("error getRecentPlaylistSummaries: %s", err)
+			return nil, errorResponse(c, 500, "internal server error")
+		}
+
+		body := GetRecentPlaylistsResponse{
+			BasicResponse: BasicResponse{
+				Result: true,
+				Status: 200,
+			},
+			Playlists: playlists,
+		}
+
+		return body, nil
+
+	})
+
 	if err != nil {
-		c.Logger().Errorf("error getRecentPlaylistSummaries: %s", err)
-		return errorResponse(c, 500, "internal server error")
+		return err
 	}
 
-	body := GetRecentPlaylistsResponse{
-		BasicResponse: BasicResponse{
-			Result: true,
-			Status: 200,
-		},
-		Playlists: playlists,
-	}
-	if err := c.JSON(http.StatusOK, body); err != nil {
+	if err := c.JSON(http.StatusOK, v); err != nil {
 		c.Logger().Errorf("error returns JSON: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
 
 	return nil
 }
+
+var sfGroupPP singleflight.Group
 
 // GET /api/popular_playlists
 
@@ -1072,39 +1087,49 @@ func apiPopularPlaylistsHandler(c echo.Context) error {
 		userAccount = _account.(string)
 	}
 
-	ctx := c.Request().Context()
-	conn, err := db.Connx(ctx)
-	if err != nil {
-		c.Logger().Errorf("error db.Conn: %s", err)
-		return errorResponse(c, 500, "internal server error")
-	}
-	defer conn.Close()
+	v, err, _ := sfGroupPP.Do(userAccount, func() (interface{}, error) {
+		ctx := c.Request().Context()
+		conn, err := db.Connx(ctx)
+		if err != nil {
+			c.Logger().Errorf("error db.Conn: %s", err)
+			return nil, errorResponse(c, 500, "internal server error")
+		}
+		defer conn.Close()
 
-	// トランザクションを使わないとfav数の順番が狂うことがある
-	tx, err := conn.BeginTxx(ctx, nil)
+		// トランザクションを使わないとfav数の順番が狂うことがある
+		tx, err := conn.BeginTxx(ctx, nil)
+		if err != nil {
+			c.Logger().Errorf("error conn.BeginTxx: %s", err)
+			return nil, errorResponse(c, 500, "internal server error")
+		}
+		playlists, err := getPopularPlaylistSummaries(ctx, tx, userAccount)
+		if err != nil {
+			tx.Rollback()
+			c.Logger().Errorf("error getPopularPlaylistSummaries: %s", err)
+			return nil, errorResponse(c, 500, "internal server error")
+		}
+		if err := tx.Commit(); err != nil {
+			c.Logger().Errorf("error tx.Commit: %s", err)
+			return nil, errorResponse(c, 500, "internal server error")
+		}
+
+		body := GetRecentPlaylistsResponse{
+			BasicResponse: BasicResponse{
+				Result: true,
+				Status: 200,
+			},
+			Playlists: playlists,
+		}
+
+		return body, nil
+
+	})
+
 	if err != nil {
-		c.Logger().Errorf("error conn.BeginTxx: %s", err)
-		return errorResponse(c, 500, "internal server error")
-	}
-	playlists, err := getPopularPlaylistSummaries(ctx, tx, userAccount)
-	if err != nil {
-		tx.Rollback()
-		c.Logger().Errorf("error getPopularPlaylistSummaries: %s", err)
-		return errorResponse(c, 500, "internal server error")
-	}
-	if err := tx.Commit(); err != nil {
-		c.Logger().Errorf("error tx.Commit: %s", err)
-		return errorResponse(c, 500, "internal server error")
+		return err
 	}
 
-	body := GetRecentPlaylistsResponse{
-		BasicResponse: BasicResponse{
-			Result: true,
-			Status: 200,
-		},
-		Playlists: playlists,
-	}
-	if err := c.JSON(http.StatusOK, body); err != nil {
+	if err := c.JSON(http.StatusOK, v); err != nil {
 		c.Logger().Errorf("error returns JSON: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
