@@ -124,6 +124,10 @@ func main() {
 
 	e.POST("/initialize", initializeHandler)
 
+	e.GET("/cache_stats/aop", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, cacheAOP.Stats())
+	})
+
 	var err error
 	db, err = connectDB()
 	if err != nil {
