@@ -821,7 +821,7 @@ func insertPlaylistFavorite(ctx context.Context, db connOrTx, playlistID int, fa
 	}
 	if _, err := db.ExecContext(
 		ctx,
-		"INSERT INTO favorite_count (`playlist_id`, `count`) VALUES (?, 0) ON DUPLICATE KEY UPDATE count=count+1",
+		"INSERT INTO favorite_count (`playlist_id`, `count`) VALUES (?, 1) ON DUPLICATE KEY UPDATE count=count+1",
 		playlistID,
 	); err != nil {
 		return fmt.Errorf(
