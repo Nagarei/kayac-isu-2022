@@ -74,7 +74,7 @@ discocat-alp:
 .PHONY: pprof-record
 pprof-record:
 	echo "start pprof-record" | discocat
-	go tool pprof -top http://localhost:6060/debug/pprof/profile
+	go tool pprof -top http://localhost:6060/debug/fgprof
 	$(eval latest := $(shell ls -rt pprof/ | tail -n 1))
 	echo "finish pprof-record\ncreated: $(latest)" | discocat
 
