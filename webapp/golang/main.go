@@ -466,7 +466,7 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 	if err := db.SelectContext(
 		ctx,
 		&popular,
-		`SELECT playlist_id, count(*) AS favorite_count FROM playlist_favorite GROUP BY playlist_id ORDER BY count(*) DESC`,
+		`SELECT playlist_id, count AS favorite_count FROM triggered_favorite_count ORDER BY count(*) DESC`,
 	); err != nil {
 		return nil, fmt.Errorf(
 			"error Select playlist_favorite: %w",
