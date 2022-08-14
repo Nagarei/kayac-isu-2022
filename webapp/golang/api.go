@@ -24,12 +24,12 @@ type PlaylistDetail struct {
 }
 
 type Song struct {
-	ULID        string `json:"ulid"`
-	Title       string `json:"title"`
-	Artist      string `json:"artist"`
-	Album       string `json:"album"`
-	TrackNumber int    `json:"track_number"`
-	IsPublic    bool   `json:"is_public"`
+	ULID        string `json:"ulid" db:"ulid"`
+	Title       string `json:"title" db:"title"`
+	Artist      string `json:"artist" db:"artist_name"`
+	Album       string `json:"album" db:"album"`
+	TrackNumber int    `json:"track_number" db:"track_number"`
+	IsPublic    bool   `json:"is_public" db:"is_public"`
 }
 
 // API request types

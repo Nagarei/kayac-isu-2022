@@ -659,49 +659,66 @@ func getPlaylistDetailByPlaylistULID(ctx context.Context, db connOrTx, playlistU
 		}
 	}
 
-	var resPlaylistSongs []PlaylistSongRow
+	// var resPlaylistSongs []PlaylistSongRow
+	// if err := db.SelectContext(
+	// 	ctx,
+	// 	&resPlaylistSongs,
+	// 	"SELECT * FROM playlist_song WHERE playlist_id = ?",
+	// 	playlist.ID,
+	// ); err != nil {
+	// 	return nil, fmt.Errorf(
+	// 		"error Select playlist_song by playlist_id=%d: %w",
+	// 		playlist.ID, err,
+	// 	)
+	// }
+
+	// songs := make([]Song, 0, len(resPlaylistSongs))
+	// for _, row := range resPlaylistSongs {
+	// 	var song SongRow
+	// 	if err := db.GetContext(
+	// 		ctx,
+	// 		&song,
+	// 		"SELECT * FROM song WHERE id = ?",
+	// 		row.SongID,
+	// 	); err != nil {
+	// 		return nil, fmt.Errorf("error Get song by id=%d: %w", row.SongID, err)
+	// 	}
+
+	// 	var artist ArtistRow
+	// 	if err := db.GetContext(
+	// 		ctx,
+	// 		&artist,
+	// 		"SELECT * FROM artist WHERE id = ?",
+	// 		song.ArtistID,
+	// 	); err != nil {
+	// 		return nil, fmt.Errorf("error Get artist by id=%d: %w", song.ArtistID, err)
+	// 	}
+
+	// 	songs = append(songs, Song{
+	// 		ULID:        song.ULID,
+	// 		Title:       song.Title,
+	// 		Artist:      artist.Name,
+	// 		Album:       song.Album,
+	// 		TrackNumber: song.TrackNumber,
+	// 		IsPublic:    song.IsPublic,
+	// 	})
+	// }
+
+	var songs []Song
 	if err := db.SelectContext(
 		ctx,
-		&resPlaylistSongs,
-		"SELECT * FROM playlist_song WHERE playlist_id = ?",
+		&songs,
+		`SELECT song.ulid as ulid, song.title as title, artist.name as artist_name,
+			song.album as album, song.track_number as track_number, song.is_public as is_public FROM playlist_song
+		JOIN song ON playlist_song.song_id = song.id
+		JOIN artist ON song.artist_id = artist.id
+		WHERE playlist_id = ?`,
 		playlist.ID,
 	); err != nil {
 		return nil, fmt.Errorf(
 			"error Select playlist_song by playlist_id=%d: %w",
 			playlist.ID, err,
 		)
-	}
-
-	songs := make([]Song, 0, len(resPlaylistSongs))
-	for _, row := range resPlaylistSongs {
-		var song SongRow
-		if err := db.GetContext(
-			ctx,
-			&song,
-			"SELECT * FROM song WHERE id = ?",
-			row.SongID,
-		); err != nil {
-			return nil, fmt.Errorf("error Get song by id=%d: %w", row.SongID, err)
-		}
-
-		var artist ArtistRow
-		if err := db.GetContext(
-			ctx,
-			&artist,
-			"SELECT * FROM artist WHERE id = ?",
-			song.ArtistID,
-		); err != nil {
-			return nil, fmt.Errorf("error Get artist by id=%d: %w", song.ArtistID, err)
-		}
-
-		songs = append(songs, Song{
-			ULID:        song.ULID,
-			Title:       song.Title,
-			Artist:      artist.Name,
-			Album:       song.Album,
-			TrackNumber: song.TrackNumber,
-			IsPublic:    song.IsPublic,
-		})
 	}
 
 	return &PlaylistDetail{
