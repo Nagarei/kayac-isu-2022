@@ -1386,6 +1386,19 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 
 	updatedTimestamp := time.Now()
 
+	var plSongs []PlaylistSongRow
+	for i, songULID := range songULIDs {
+		song, err := getSongByULID(ctx, db, songULID)
+		if err != nil {
+			c.Logger().Errorf("error getSongByULID: %s", err)
+			return errorResponse(c, 500, "internal server error")
+		}
+		if song == nil {
+			return errorResponse(c, 400, fmt.Sprintf("song not found. ulid: %s", songULID))
+		}
+		plSongs = append(plSongs, PlaylistSongRow{playlist.ID, i + 1, song.ID})
+	}
+
 	tx, err := conn.BeginTxx(ctx, nil)
 	if err != nil {
 		c.Logger().Errorf("error conn.BeginTxx: %s", err)
@@ -1419,24 +1432,13 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 		)
 		return errorResponse(c, 500, "internal server error")
 	}
-
-	for i, songULID := range songULIDs {
-		song, err := getSongByULID(ctx, tx, songULID)
-		if err != nil {
-			tx.Rollback()
-			c.Logger().Errorf("error getSongByULID: %s", err)
-			return errorResponse(c, 500, "internal server error")
-		}
-		if song == nil {
-			tx.Rollback()
-			return errorResponse(c, 400, fmt.Sprintf("song not found. ulid: %s", songULID))
-		}
-
-		if err := insertPlaylistSong(ctx, tx, playlist.ID, i+1, song.ID); err != nil {
-			tx.Rollback()
-			c.Logger().Errorf("error insertPlaylistSong: %s", err)
-			return errorResponse(c, 500, "internal server error")
-		}
+	if _, err := tx.ExecContext(
+		ctx,
+		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id)",
+		plSongs,
+	); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error Insert playlist_song: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
