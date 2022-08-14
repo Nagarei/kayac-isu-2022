@@ -44,7 +44,7 @@ bench: check-server-id discocat-now-status rm-logs deploy-kayac watch-log-kayac
 
 .PHONY: deploy-kayac
 deploy-kayac:
-	docker-compose up --build -d -f webapp/docker-compose.yml
+	docker-compose -f webapp/docker-compose.yml up --build -d
 
 .PHONY: watch-log-kayac
 watch-log-kayac:
