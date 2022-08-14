@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -40,7 +41,8 @@ var (
 	sessionStore sessions.Store
 	tr           = &renderer{templates: template.Must(template.ParseGlob("views/*.html"))}
 	// for use ULID
-	entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	entropy     = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	sound_count = sync.Map{}
 )
 
 func getEnv(key string, defaultValue string) string {
