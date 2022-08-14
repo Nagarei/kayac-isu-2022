@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/motoki317/sc"
 	"github.com/oklog/ulid/v2"
 	"github.com/srinathgs/mysqlstore"
 	"golang.org/x/crypto/bcrypt"
@@ -79,6 +81,10 @@ func cacheControllPrivate(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func initCache() {
+	cacheAOP, _ = sc.New(retrieveAOP, 60*time.Minute, 60*time.Minute)
+}
+
 func main() {
 
 	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
@@ -132,6 +138,8 @@ func main() {
 		e.Logger.Fatalf("failed to initialize session store: %v", err)
 		return
 	}
+
+	initCache()
 
 	port := getEnv("SERVER_APP_PORT", "3000")
 	e.Logger.Infof("starting listen80 server on : %s ...", port)
@@ -262,6 +270,35 @@ func authRequiredPageHandler(c echo.Context) error {
 	})
 }
 
+var cacheAOP *sc.Cache[cacheKeyAOP, string]
+
+type cacheKeyAOP struct {
+	TemplateName string
+	LoggedIn     bool
+	Ulid         string
+	DisplayName  string
+	UserAccount  string
+}
+
+func retrieveAOP(_ context.Context, key cacheKeyAOP) (string, error) {
+	templateParams := &TemplateParams{
+		LoggedIn: key.LoggedIn,
+		Params: map[string]string{
+			"ulid": key.Ulid,
+		},
+		DisplayName: key.DisplayName,
+		UserAccount: key.UserAccount,
+	}
+
+	var buf bytes.Buffer
+	err := tr.Render(&buf, key.TemplateName, templateParams, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 var authOptionalPages = map[string]string{
 	"/":               "top.html",
 	"/playlist/:ulid": "playlist.html",
@@ -282,14 +319,27 @@ func authOptionalPageHandler(c echo.Context) error {
 		account = user.Account
 	}
 	page := authOptionalPages[c.Path()]
-	return c.Render(http.StatusOK, page, &TemplateParams{
-		LoggedIn: ok,
-		Params: map[string]string{
-			"ulid": c.Param("ulid"),
-		},
-		DisplayName: displayName,
-		UserAccount: account,
+	// return c.Render(http.StatusOK, page, &TemplateParams{
+	// 	LoggedIn: ok,
+	// 	Params: map[string]string{
+	// 		"ulid": c.Param("ulid"),
+	// 	},
+	// 	DisplayName: displayName,
+	// 	UserAccount: account,
+	// })
+
+	renderedHtml, err := cacheAOP.Get(context.Background(), cacheKeyAOP{
+		TemplateName: page,
+		LoggedIn:     ok,
+		Ulid:         c.Param("ulid"),
+		DisplayName:  displayName,
+		UserAccount:  account,
 	})
+	if err != nil {
+		return err
+	}
+
+	return c.HTML(http.StatusOK, renderedHtml)
 }
 
 var authPages = map[string]string{
