@@ -49,3 +49,8 @@ type PlaylistFavoriteRow struct {
 	FavoriteUserAccount string    `db:"favorite_user_account"`
 	CreatedAt           time.Time `db:"created_at"`
 }
+
+type FavoriteCountRow struct {
+	PlaylistID int `db:"playlist_id"`
+	Count      int `db:"count"`
+}

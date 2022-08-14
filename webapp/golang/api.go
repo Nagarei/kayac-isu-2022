@@ -11,7 +11,7 @@ type Playlist struct {
 	UserDisplayName string    `json:"user_display_name" db:"display_name"`
 	UserAccount     string    `json:"user_account" db:"account"`
 	SongCount       int       `json:"song_count"`
-	FavoriteCount   int       `json:"favorite_count"`
+	FavoriteCount   int       `json:"favorite_count" db:"favorite_count"`
 	IsFavorited     bool      `json:"is_favorited"`
 	IsPublic        bool      `json:"is_public" db:"is_public"`
 	CreatedAt       time.Time `json:"created_at" db:"created_at"`
