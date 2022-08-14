@@ -365,9 +365,12 @@ func getFavoritesCountByPlaylistID(ctx context.Context, db connOrTx, playlistID 
 	if err := db.GetContext(
 		ctx,
 		&count,
-		"SELECT COALESCE(count, 0) FROM favorite_count where playlist_id = ?",
+		"SELECT count FROM favorite_count where playlist_id = ?",
 		playlistID,
 	); err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
 		return 0, fmt.Errorf(
 			"error Get count of favorite_count by playlist_id=%d: %w",
 			playlistID, err,
