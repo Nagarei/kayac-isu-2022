@@ -245,9 +245,9 @@ check-commit:
 run-bench:
 	mkdir -p tmp/bench-log
 	cd bench && ./bench -target-url http://localhost:80 > ~/tmp/bench-log/bench-log
-	cat ~/tmp/bench-log/bench-log | discocat
 	@make refresh-descocat-tmp
 	cat $(DISCOCAT_TRIPLE_BACK_QUOTES) >> $(DISCOCAT_TMPFILE)
+	echo "" >> $(DISCOCAT_TMPFILE)
 	echo "Bench" >> $(DISCOCAT_TMPFILE)
 	echo "" >> $(DISCOCAT_TMPFILE)
 	cat ~/tmp/bench-log/bench-log >> $(DISCOCAT_TMPFILE)
