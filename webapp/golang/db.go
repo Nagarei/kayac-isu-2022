@@ -43,6 +43,11 @@ type PlaylistSongRow struct {
 	SongID     int `db:"song_id"`
 }
 
+type PlaylistSongCountRow struct {
+	PlaylistID int `db:"playlist_id"`
+	Count      int `db:"count_v"`
+}
+
 type PlaylistFavoriteRow struct {
 	ID                  int       `db:"id"`
 	PlaylistID          int       `db:"playlist_id"`

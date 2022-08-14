@@ -386,11 +386,11 @@ func getSongsCountByPlaylistID(ctx context.Context, db connOrTx, playlistID int)
 	if err := db.GetContext(
 		ctx,
 		&count,
-		"SELECT COUNT(*) AS cnt FROM playlist_song where playlist_id = ?",
+		"SELECT count FROM playlist_song_count where playlist_id = ?",
 		playlistID,
 	); err != nil {
 		return 0, fmt.Errorf(
-			"error Get count of playlist_song by playlist_id=%d: %w",
+			"error Get count of playlist_song_count by playlist_id=%d: %w",
 			playlistID, err,
 		)
 	}
@@ -775,20 +775,6 @@ func getUserByAccount(ctx context.Context, db connOrTx, account string) (*UserRo
 		)
 	}
 	return &result, nil
-}
-
-func insertPlaylistSong(ctx context.Context, db connOrTx, playlistID, sortOrder, songID int) error {
-	if _, err := db.ExecContext(
-		ctx,
-		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (?, ?, ?)",
-		playlistID, sortOrder, songID,
-	); err != nil {
-		return fmt.Errorf(
-			"error Insert playlist_song by playlist_id=%d, sort_order=%d, song_id=%d: %w",
-			playlistID, sortOrder, songID, err,
-		)
-	}
-	return nil
 }
 
 func insertPlaylistFavorite(ctx context.Context, tx *sqlx.Tx, playlistID int, favoriteUserAccount string, createdAt time.Time) error {
@@ -1440,6 +1426,14 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 		tx.Rollback()
 		return fmt.Errorf("error Insert playlist_song: %w", err)
 	}
+	if _, err := tx.ExecContext(
+		ctx,
+		"UPDATE playlist_song_count SET count = ? WHERE playlist_id = ?",
+		len(plSongs), playlist.ID,
+	); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error update playlist_song_count: %w", err)
+	}
 
 	if err := tx.Commit(); err != nil {
 		c.Logger().Errorf("error tx.Commit: %s", err)
@@ -1533,6 +1527,14 @@ func apiPlaylistDeleteHandler(c echo.Context) error {
 		playlist.ID,
 	); err != nil {
 		c.Logger().Errorf("error Delete playlist_song by id=%s: %s", playlist.ID, err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	if _, err := conn.ExecContext(
+		ctx,
+		"DELETE FROM playlist_song_count WHERE playlist_id = ?",
+		playlist.ID,
+	); err != nil {
+		c.Logger().Errorf("error Delete playlist_song_count by id=%s: %s", playlist.ID, err)
 		return errorResponse(c, 500, "internal server error")
 	}
 
@@ -1831,6 +1833,29 @@ func initializeHandler(c echo.Context) error {
 	if _, err := conn.ExecContext(
 		ctx,
 		"DELETE FROM playlist_song WHERE playlist_id NOT IN (SELECT id FROM playlist)",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	if _, err := conn.ExecContext(
+		ctx,
+		"DROP TABLE IF EXISTS playlist_song_count",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	if _, err := conn.ExecContext(
+		ctx,
+		"CREATE TABLE playlist_song_count (`playlist_id` bigint NOT NULL, `count` int NOT NULL,"+
+			"	PRIMARY KEY (`playlist_id`))",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	if _, err := conn.ExecContext(
+		ctx,
+		"INSERT INTO playlist_song_count (`playlist_id`, `count`) "+
+			"	SELECT playlist_id, count(*) AS count FROM playlist_song GROUP BY playlist_id",
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
 		return errorResponse(c, 500, "internal server error")
