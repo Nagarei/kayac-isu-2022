@@ -457,7 +457,7 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 		// 	UpdatedAt:       playlist.UpdatedAt,
 		// })
 		playlists[index].SongCount = songCount
-		playlists[index].FavoriteCount = favoriteCount
+		//playlists[index].FavoriteCount = favoriteCount
 		playlists[index].IsFavorited = isFavorited
 	}
 	return playlists, nil
