@@ -374,7 +374,7 @@ func getFavoritesCountByPlaylistID2(ctx context.Context, tx *sqlx.Tx, playlistID
 			return 0, nil
 		}
 		return 0, fmt.Errorf(
-			"error Get count of favorite_count by playlist_id=%d: %w",
+			"error Get count of playlist_favorite by playlist_id=%d: %w",
 			playlistID, err,
 		)
 	}
@@ -1940,7 +1940,7 @@ func initializeHandler(c echo.Context) error {
 	}
 	if _, err := conn.ExecContext(
 		ctx,
-		"CREATE TABLE favorite_count (`playlist_id` varchar(30) NOT NULL, `count_v` int NOT NULL,"+
+		"CREATE TABLE favorite_count (`playlist_id` bigint NOT NULL, `count_v` int NOT NULL,"+
 			"	PRIMARY KEY (`playlist_id`), KEY `idx_count` (`count_v` DESC))",
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
