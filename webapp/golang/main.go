@@ -1752,6 +1752,17 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 			return errorResponse(c, 500, "internal server error")
 		}
 	}
+	favorite_ok = true
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	tx, err = conn.BeginTxx(ctx, nil)
+	if err != nil {
+		c.Logger().Errorf("error conn.BeginTxx: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	favorite_ok = false
 
 	playlistDetail, err := getPlaylistDetailByPlaylistULID(ctx, tx, playlist.ULID, &userAccount)
 	if err != nil {
