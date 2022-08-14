@@ -1054,12 +1054,19 @@ func apiRecentPlaylistsHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 	defer conn.Close()
-
-	playlists, err := getRecentPlaylistSummaries(ctx, conn, userAccount)
+	tx, err := conn.BeginTxx(ctx, nil)
 	if err != nil {
+		c.Logger().Errorf("error conn.BeginTxx: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	playlists, err := getRecentPlaylistSummaries(ctx, tx, userAccount)
+	if err != nil {
+		tx.Rollback()
 		c.Logger().Errorf("error getRecentPlaylistSummaries: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
+	tx.Commit()
 
 	body := GetRecentPlaylistsResponse{
 		BasicResponse: BasicResponse{
