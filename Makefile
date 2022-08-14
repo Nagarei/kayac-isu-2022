@@ -39,7 +39,7 @@ deploy-conf: check-server-id deploy-db-conf deploy-nginx-conf deploy-service-fil
 
 # ベンチマークを走らせる直前に実行する
 .PHONY: bench
-bench: check-server-id discocat-now-status rm-logs deploy-kayac watch-log-kayac
+bench: check-server-id discocat-now-status rm-logs check-commit deploy-kayac watch-log-kayac
 # bench: check-server-id discocat-now-status rm-logs deploy-conf restart watch-service-log
 
 .PHONY: deploy-kayac
@@ -234,3 +234,8 @@ discocat-now-status:
 	git show -s >> $(DISCOCAT_TMPFILE)
 	cat $(DISCOCAT_TRIPLE_BACK_QUOTES) >> $(DISCOCAT_TMPFILE)
 	cat $(DISCOCAT_TMPFILE) | discocat
+
+.PHONY: check-commit
+check-commit:
+	mkdir -p tmp/check-commit
+	go run tool-config/check-commit/main.go
