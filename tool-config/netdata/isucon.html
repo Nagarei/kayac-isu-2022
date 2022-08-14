@@ -10,12 +10,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <script type="text/javascript" src="/dashboard.js"></script>
+    <!-- <script type="text/javascript" src="/dashboard.js"></script> -->
+    <script
+      type="text/javascript"
+      src="http://localhost:19999/dashboard.js"
+    ></script>
 
 </head>
 <body>
     <h1>Realtime Metrics</h1>
-    <div data-netdata="services.cpu"
+    <div data-netdata="system.cpu"
         data-title="CPU Usage"
         data-chart-library="easypiechart"
         data-units="%"
@@ -43,9 +47,6 @@
         data-width="200"
         data-height="200"
     >
-        <div id="easypiechart-system.io-1-chart"
-            class="netdata-chart netdata-easypiechart-chart">
-        <span class="easyPieChartLabel" style="font-size: 12.5542px; top: 40px;">0.0</span><span class="easyPieChartTitle" style="font-size: 7px; top: 24px;">Disk Read</span><span class="easyPieChartUnits" style="font-size: 6px; top: 61px;">KiB/s</span><canvas height="188" width="188" style="height: 94.1562px; width: 94.1562px;"></canvas></div>
     </div>
 
     <div data-netdata="system.io"
@@ -56,16 +57,22 @@
         data-width="200"
         data-height="200"
     >
-        <div id="easypiechart-system.io-2-chart"
-            class="netdata-chart netdata-easypiechart-chart">
-        <span class="easyPieChartLabel" style="font-size: 12.5542px; top: 40px;">0.00</span><span class="easyPieChartTitle" style="font-size: 7px; top: 24px;">Disk Write</span><span class="easyPieChartUnits" style="font-size: 6px; top: 61px;">MiB/s</span><canvas height="188" width="188" style="height: 94.1562px; width: 94.1562px;"></canvas></div>
     </div>
 
+    <br/>
+
+    <div data-netdata="system.cpu"
+    data-chart-library="d3pie"
+    data-units="%"
+    data-width="400"
+    data-height="300"
+    ></div>
+
     <div data-netdata="services.cpu"
-        data-chart-library="d3pie"
-        data-height="300px"
-        data-after="-60"
-        data-points="60"
+    data-chart-library="d3pie"
+    data-units="%"
+    data-width="400"
+    data-height="300"
     ></div>
 
     <h1>Time-series Metrics</h1>
