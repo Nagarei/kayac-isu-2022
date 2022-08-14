@@ -365,11 +365,11 @@ func getFavoritesCountByPlaylistID(ctx context.Context, db connOrTx, playlistID 
 	if err := db.GetContext(
 		ctx,
 		&count,
-		"SELECT COUNT(*) AS cnt FROM playlist_favorite where playlist_id = ?",
+		"SELECT count FROM favorite_count where playlist_id = ?",
 		playlistID,
 	); err != nil {
 		return 0, fmt.Errorf(
-			"error Get count of playlist_favorite by playlist_id=%d: %w",
+			"error Get count of favorite_count by playlist_id=%d: %w",
 			playlistID, err,
 		)
 	}
@@ -465,10 +465,10 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 	if err := db.SelectContext(
 		ctx,
 		&popular,
-		`SELECT playlist_id, count(*) AS favorite_count FROM playlist_favorite GROUP BY playlist_id ORDER BY count(*) DESC`,
+		`SELECT playlist_id, count AS favorite_count FROM favorite_count ORDER BY count DESC`,
 	); err != nil {
 		return nil, fmt.Errorf(
-			"error Select playlist_favorite: %w",
+			"error Select favorite_count: %w",
 			err,
 		)
 	}
@@ -1807,8 +1807,6 @@ func initializeHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 
-	SELECT playlist_id, count(*) AS favorite_count FROM playlist_favorite GROUP BY playlist_id ORDER BY count(*) DESC;
-
 	if _, err := conn.ExecContext(
 		ctx,
 		"DROP TABLE IF EXISTS favorite_count",
@@ -1819,7 +1817,7 @@ func initializeHandler(c echo.Context) error {
 	if _, err := conn.ExecContext(
 		ctx,
 		"CREATE TABLE favorite_count (`playlist_id` varchar(191) NOT NULL, `count` int NOT NULL,"+
-		"	PRIMARY KEY (`playlist_id`), KEY `count` (`count`))",
+			"	PRIMARY KEY (`playlist_id`), KEY `count` (`count` DESC))",
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
 		return errorResponse(c, 500, "internal server error")
@@ -1827,7 +1825,7 @@ func initializeHandler(c echo.Context) error {
 	if _, err := conn.ExecContext(
 		ctx,
 		"INSERT INTO favorite_count (`playlist_id`, `count`) "+
-		"	SELECT playlist_id, count(*) AS count FROM playlist_favorite GROUP BY playlist_id",
+			"	SELECT playlist_id, count(*) AS count FROM playlist_favorite GROUP BY playlist_id",
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
 		return errorResponse(c, 500, "internal server error")
