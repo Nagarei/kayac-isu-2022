@@ -1654,35 +1654,45 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 		}
 	}
 
-	tx, err := conn.BeginTxx(ctx, nil)
-	favorite_ok := false
-	defer func() {
-		if !favorite_ok {
-			tx.Rollback()
-		}
-	}()
 	if isFavorited {
 		// insert
 		createdTimestamp := time.Now()
 		playlistFavorite, err := getPlaylistFavoritesByPlaylistIDAndUserAccount(
-			ctx, tx, playlist.ID, userAccount,
+			ctx, db, playlist.ID, userAccount,
 		)
 		if err != nil {
 			c.Logger().Errorf("error getPlaylistFavoritesByPlaylistIDAndUserAccount: %s", err)
 			return errorResponse(c, 500, "internal server error")
 		}
 		if playlistFavorite == nil {
+			tx, err := conn.BeginTxx(ctx, nil)
+			if err != nil {
+				c.Logger().Errorf("error conn.BeginTxx: %s", err)
+				return errorResponse(c, 500, "internal server error")
+			}
 			if err := insertPlaylistFavorite(ctx, tx, playlist.ID, userAccount, createdTimestamp); err != nil {
+				tx.Rollback()
 				c.Logger().Errorf("error insertPlaylistFavorite: %s", err)
+				return errorResponse(c, 500, "internal server error")
+			}
+			if err := tx.Commit(); err != nil {
+				c.Logger().Errorf("error tx.Commit: %s", err)
 				return errorResponse(c, 500, "internal server error")
 			}
 		}
 	} else {
-		// delete
+		tx, err := conn.BeginTxx(ctx, nil)
 		if err != nil {
 			c.Logger().Errorf("error conn.BeginTxx: %s", err)
 			return errorResponse(c, 500, "internal server error")
 		}
+		favorite_ok := false
+		defer func() {
+			if !favorite_ok {
+				tx.Rollback()
+			}
+		}()
+		// delete
 		if _, err := tx.ExecContext(
 			ctx,
 			"DELETE FROM playlist_favorite WHERE `playlist_id` = ? AND `favorite_user_account` = ?",
@@ -1702,11 +1712,11 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 			c.Logger().Errorf("error UPDATE favorite_count by id=%s: %s", playlist.ID, err)
 			return errorResponse(c, 500, "internal server error")
 		}
-	}
-	favorite_ok = true
-	if err := tx.Commit(); err != nil {
-		c.Logger().Errorf("error tx.Commit: %s", err)
-		return errorResponse(c, 500, "internal server error")
+		favorite_ok = true
+		if err := tx.Commit(); err != nil {
+			c.Logger().Errorf("error tx.Commit: %s", err)
+			return errorResponse(c, 500, "internal server error")
+		}
 	}
 
 	playlistDetail, err := getPlaylistDetailByPlaylistULID(ctx, conn, playlist.ULID, &userAccount)
