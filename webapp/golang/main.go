@@ -1434,7 +1434,7 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 	// }
 	if _, err := tx.NamedExecContext(
 		ctx,
-		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id) ON DUPLICATE KEY UPDATE song_id=:song_id",
+		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id) ON DUPLICATE KEY UPDATE song_id=VALUES(song_id)",
 		plSongs,
 	); err != nil {
 		tx.Rollback()
