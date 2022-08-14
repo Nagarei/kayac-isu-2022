@@ -402,8 +402,9 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 	if err := db.SelectContext(
 		ctx,
 		&playlists,
-		" SELECT pl.id as id, pl.ulid as ulid, pl.name as name, pl.is_public as is_public, pl.created_at as created_at, pl.updated_at as updated_at, display_name, account"+
+		" SELECT pl.id as id, pl.ulid as ulid, pl.name as name, pl.is_public as is_public, pl.created_at as created_at, pl.updated_at as updated_at, display_name, account, count as favorite_count"+
 			" FROM playlist as pl INNER JOIN user ON user.`account` = pl.`user_account`"+
+			" INNER JOIN favorite_count ON favorite_count.playlist_id = pl.id"+
 			" where pl.is_public = true AND user.is_ban = false"+
 			" ORDER BY pl.created_at DESC LIMIT 100",
 	); err != nil {
@@ -429,10 +430,10 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
 		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: %w", err)
-		}
+		// favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: %w", err)
+		// }
 
 		var isFavorited bool
 		if userAccount != anonUserAccount {
