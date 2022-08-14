@@ -3,5 +3,6 @@ RUN apt-get update && apt-get -y upgrade
 RUN mkdir -p /home/isucon
 COPY . /home/isucon/webapp
 WORKDIR /home/isucon/webapp
+RUN go mod download
 RUN go build -o isucon ./... 
 CMD ["./isucon"]
