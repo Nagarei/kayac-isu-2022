@@ -27,6 +27,8 @@ services:
       ISUCON_DB_NAME: isucon_listen80
     links:
       - mysql
+    ports:
+      - "6060:6060"
     volumes:
       - ./public:/home/isucon/webapp/public
       - gopkg:/usr/local/go/pkg
