@@ -466,7 +466,7 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 	if err := db.SelectContext(
 		ctx,
 		&popular,
-		`SELECT playlist_id, count(*) AS favorite_count FROM playlist_favorite GROUP BY playlist_id ORDER BY count(*) DESC`,
+		`SELECT playlist_id, count AS favorite_count FROM triggered_favorite_count ORDER BY favorite_count DESC`,
 	); err != nil {
 		return nil, fmt.Errorf(
 			"error Select playlist_favorite: %w",
@@ -1777,6 +1777,68 @@ func initializeHandler(c echo.Context) error {
 		ctx,
 		"DELETE FROM playlist_favorite WHERE playlist_id NOT IN (SELECT id FROM playlist) OR ? < created_at",
 		lastCreatedAt,
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		"DROP TABLE IF EXISTS `triggered_favorite_count`",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		"CREATE TABLE `triggered_favorite_count` (`playlist_id`  BIGINT NOT NULL, `count` BIGINT NOT NULL, PRIMARY KEY (`playlist_id`)) ENGINE=InnoDB",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		"DROP TRIGGER IF EXISTS `insert_after_update_favorite_count`",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		"CREATE TRIGGER `insert_after_update_favorite_count` AFTER INSERT ON `playlist_favorite` FOR EACH ROW "+
+			"INSERT INTO `triggered_favorite_count` (`playlist_id`, `count`) "+
+			"SELECT `pf`.`playlist_id`, count(*) AS `count` FROM `playlist_favorite` AS `pf` WHERE `pf`.`playlist_id` = NEW.`playlist_id` GROUP BY `pf`.`playlist_id` "+
+			"ON DUPLICATE KEY UPDATE `playlist_id` = VALUES(`playlist_id`)",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		"DROP TRIGGER IF EXISTS `delete_after_update_favorite_count`",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		"CREATE TRIGGER `delete_after_update_favorite_count` AFTER INSERT ON `playlist_favorite` FOR EACH ROW "+
+			"INSERT INTO `triggered_favorite_count` (`playlist_id`, `count`) "+
+			"SELECT `pf`.`playlist_id`, count(*) AS `count` FROM `playlist_favorite` AS `pf` WHERE `pf`.`playlist_id` = NEW.`playlist_id` GROUP BY `pf`.`playlist_id` "+
+			"ON DUPLICATE KEY UPDATE `playlist_id` = VALUES(`playlist_id`)",
+	); err != nil {
+		c.Logger().Errorf("error: initialize %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	if _, err := conn.ExecContext(
+		ctx,
+		`INSERT INTO triggered_favorite_count SELECT playlist_id, count(*) AS count FROM playlist_favorite GROUP BY playlist_id`,
 	); err != nil {
 		c.Logger().Errorf("error: initialize %s", err)
 		return errorResponse(c, 500, "internal server error")
