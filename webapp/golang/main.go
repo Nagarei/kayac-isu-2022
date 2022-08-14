@@ -365,7 +365,7 @@ func getFavoritesCountByPlaylistID(ctx context.Context, db connOrTx, playlistID 
 	if err := db.GetContext(
 		ctx,
 		&count,
-		"SELECT count FROM favorite_count where playlist_id = ?",
+		"SELECT COALESCE(count, 0) FROM favorite_count where playlist_id = ?",
 		playlistID,
 	); err != nil {
 		return 0, fmt.Errorf(
@@ -478,6 +478,10 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 	}
 	playlists := make([]Playlist, 0, len(popular))
 	for _, p := range popular {
+		if p.FavoriteCount == 0 {
+			break
+		}
+
 		playlist, err := getPlaylistByID(ctx, db, p.PlaylistID)
 		if err != nil {
 			return nil, fmt.Errorf("error getPlaylistByID: %w", err)
@@ -1550,10 +1554,10 @@ func apiPlaylistDeleteHandler(c echo.Context) error {
 	}
 	if _, err := conn.ExecContext(
 		ctx,
-		"UPDATE favorite_count SET count=0 WHERE playlist_id = ?",
+		"DELETE FROM favorite_count WHERE playlist_id = ?",
 		playlist.ID,
 	); err != nil {
-		c.Logger().Errorf("error UPDATE favorite_count by id=%s: %s", playlist.ID, err)
+		c.Logger().Errorf("error DELETE favorite_count by id=%s: %s", playlist.ID, err)
 		return errorResponse(c, 500, "internal server error")
 	}
 
