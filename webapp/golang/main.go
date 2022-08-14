@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -369,7 +370,7 @@ func getFavoritesCountByPlaylistID(ctx context.Context, db connOrTx, playlistID 
 		"SELECT count FROM favorite_count where playlist_id = ?",
 		playlistID,
 	); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return 0, nil
 		}
 		return 0, fmt.Errorf(
