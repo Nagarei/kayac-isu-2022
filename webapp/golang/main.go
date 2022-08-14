@@ -1386,7 +1386,7 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 
 	updatedTimestamp := time.Now()
 
-	var plSongs []PlaylistSongRow
+	plSongs := []PlaylistSongRow{}
 	for i, songULID := range songULIDs {
 		song, err := getSongByULID(ctx, db, songULID)
 		if err != nil {
@@ -1432,7 +1432,7 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 		)
 		return errorResponse(c, 500, "internal server error")
 	}
-	if _, err := tx.ExecContext(
+	if _, err := tx.NamedExecContext(
 		ctx,
 		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id)",
 		plSongs,
