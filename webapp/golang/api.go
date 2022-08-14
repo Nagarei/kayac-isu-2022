@@ -5,16 +5,17 @@ import "time"
 // API essential types
 
 type Playlist struct {
-	ULID            string    `json:"ulid"`
-	Name            string    `json:"name"`
-	UserDisplayName string    `json:"user_display_name"`
-	UserAccount     string    `json:"user_account"`
+	ID              int       `db:"id"`
+	ULID            string    `json:"ulid" db:"ulid"`
+	Name            string    `json:"name" db:"name"`
+	UserDisplayName string    `json:"user_display_name" db:"display_name"`
+	UserAccount     string    `json:"user_account" db:"account"`
 	SongCount       int       `json:"song_count"`
 	FavoriteCount   int       `json:"favorite_count"`
 	IsFavorited     bool      `json:"is_favorited"`
-	IsPublic        bool      `json:"is_public"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	IsPublic        bool      `json:"is_public" db:"is_public"`
+	CreatedAt       time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type PlaylistDetail struct {

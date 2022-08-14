@@ -23,8 +23,9 @@ import (
 	"github.com/srinathgs/mysqlstore"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/felixge/fgprof"
 	_ "net/http/pprof"
+
+	"github.com/felixge/fgprof"
 )
 
 const (
@@ -392,31 +393,32 @@ func getSongsCountByPlaylistID(ctx context.Context, db connOrTx, playlistID int)
 }
 
 func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount string) ([]Playlist, error) {
-	var allPlaylists []PlaylistRow
+	playlists := make([]Playlist, 0, 100)
 	if err := db.SelectContext(
 		ctx,
-		&allPlaylists,
-		"SELECT * FROM playlist where is_public = ? ORDER BY created_at DESC",
-		true,
+		&playlists,
+		" SELECT pl.id as id, pl.ulid as ulid, pl.name as name, pl.is_public as is_public, pl.created_at as created_at, pl.updated_at as updated_at, display_name, account"+
+			" FROM playlist as pl INNER JOIN user ON user.`account` = pl.`user_account`"+
+			" where pl.is_public = true AND user.is_ban = false"+
+			" ORDER BY pl.created_at DESC LIMIT 100",
 	); err != nil {
 		return nil, fmt.Errorf(
 			"error Select playlist by is_public=true: %w",
 			err,
 		)
 	}
-	if len(allPlaylists) == 0 {
+	if len(playlists) == 0 {
 		return nil, nil
 	}
 
-	playlists := make([]Playlist, 0, len(allPlaylists))
-	for _, playlist := range allPlaylists {
-		user, err := getUserByAccount(ctx, db, playlist.UserAccount)
-		if err != nil {
-			return nil, fmt.Errorf("error getUserByAccount: %w", err)
-		}
-		if user == nil || user.IsBan {
-			continue
-		}
+	for index, playlist := range playlists {
+		// user, err := getUserByAccount(ctx, db, playlist.UserAccount)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("error getUserByAccount: %w", err)
+		// }
+		// if user == nil || user.IsBan {
+		// 	continue
+		// }
 
 		songCount, err := getSongsCountByPlaylistID(ctx, db, playlist.ID)
 		if err != nil {
@@ -436,21 +438,21 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 			}
 		}
 
-		playlists = append(playlists, Playlist{
-			ULID:            playlist.ULID,
-			Name:            playlist.Name,
-			UserDisplayName: user.DisplayName,
-			UserAccount:     user.Account,
-			SongCount:       songCount,
-			FavoriteCount:   favoriteCount,
-			IsFavorited:     isFavorited,
-			IsPublic:        playlist.IsPublic,
-			CreatedAt:       playlist.CreatedAt,
-			UpdatedAt:       playlist.UpdatedAt,
-		})
-		if len(playlists) >= 100 {
-			break
-		}
+		// playlists = append(playlists, Playlist{
+		// 	ULID:            playlist.ULID,
+		// 	Name:            playlist.Name,
+		// 	UserDisplayName: user.DisplayName,
+		// 	UserAccount:     user.Account,
+		// 	SongCount:       songCount,
+		// 	FavoriteCount:   favoriteCount,
+		// 	IsFavorited:     isFavorited,
+		// 	IsPublic:        playlist.IsPublic,
+		// 	CreatedAt:       playlist.CreatedAt,
+		// 	UpdatedAt:       playlist.UpdatedAt,
+		// })
+		playlists[index].SongCount = songCount
+		playlists[index].FavoriteCount = favoriteCount
+		playlists[index].IsFavorited = isFavorited
 	}
 	return playlists, nil
 }
