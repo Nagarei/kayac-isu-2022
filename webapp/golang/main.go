@@ -399,8 +399,8 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 		&playlists,
 		" SELECT pl.id as id, pl.ulid as ulid, pl.name as name, pl.is_public as is_public, pl.created_at as created_at, pl.updated_at as updated_at, display_name, account"+
 			" FROM playlist as pl INNER JOIN user ON user.`account` = pl.`user_account`"+
-			" where is_public = true AND user.is_ban = false"+
-			" ORDER BY created_at DESC LIMIT 100",
+			" where pl.is_public = true AND user.is_ban = false"+
+			" ORDER BY pl.created_at DESC LIMIT 100",
 	); err != nil {
 		return nil, fmt.Errorf(
 			"error Select playlist by is_public=true: %w",
