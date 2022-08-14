@@ -8,9 +8,9 @@ matching_groups:            # array
   - /assets/*$
   - /mypage$
   
-  - /playlist/[0-9a-fA-F]+/edit$
+  - /playlist/[0-9a-zA-Z]+/edit$
   - /$
-  - /playlist/[0-9a-fA-F]+$
+  - /playlist/[0-9a-zA-Z]+$
   - /signup$
   - /login$
   
@@ -20,11 +20,11 @@ matching_groups:            # array
   - /api/recent_playlists$
   - /api/popular_playlists$
   - /api/playlists$
-  - /api/playlists/[0-9a-fA-F]+$
+  - /api/playlists/[0-9a-zA-Z]+$
   - /api/playlist/add$
-  - /api/playlist/[0-9a-fA-F]+/update$
-  - /api/playlist/[0-9a-fA-F]+/delete$
-  - /api/playlist/[0-9a-fA-F]+/favorite$
+  - /api/playlist/[0-9a-zA-Z]+/update$
+  - /api/playlist/[0-9a-zA-Z]+/delete$
+  - /api/playlist/[0-9a-zA-Z]+/favorite$
   - /api/admin/user/ban$
 
   - /initialize$
