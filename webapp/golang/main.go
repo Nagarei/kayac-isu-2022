@@ -144,6 +144,7 @@ func main() {
 	}
 
 	initCacheRP()
+	initCachePP()
 
 	port := getEnv("SERVER_APP_PORT", "3000")
 	e.Logger.Infof("starting listen80 server on : %s ...", port)
