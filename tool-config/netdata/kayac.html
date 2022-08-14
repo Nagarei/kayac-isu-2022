@@ -13,16 +13,12 @@
       content="black-translucent"
     />
 
-    <!-- <script type="text/javascript" src="/dashboard.js"></script> -->
-    <script
-      type="text/javascript"
-      src="http://localhost:19999/dashboard.js"
-    ></script>
+    <script type="text/javascript" src="/dashboard.js"></script>
   </head>
   <body>
     <h1>webapp-app-1</h1>
     <div class="netdata-chart-row">
-        <div
+      <div
         data-netdata="cgroup_webapp-app-1.cpu_limit"
         data-dimensions="used"
         data-chart-library="gauge"
@@ -32,8 +28,8 @@
         data-gauge-adjust="width"
         data-width="12%"
         style="width: 12%"
-        ></div>
-        <div
+      ></div>
+      <div
         data-netdata="cgroup_webapp-app-1.mem_usage_limit"
         data-append-options="percentage"
         data-dimensions="used"
@@ -44,8 +40,8 @@
         data-gauge-adjust="width"
         data-width="12%"
         style="width: 12%"
-        ></div>
-        <div
+      ></div>
+      <div
         data-netdata="cgroup_webapp-app-1.net_eth0"
         data-dimensions="received"
         data-chart-library="gauge"
@@ -63,9 +59,8 @@
         data-width="12%"
         style="width: 12%"
       ></div>
-
     </div>
-    
+
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       data-netdata="cgroup_webapp-app-1.cpu"
@@ -73,8 +68,7 @@
       data-height="260px"
       data-legend-position="bottom"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       data-netdata="cgroup_webapp-app-1.mem_utilization"
@@ -83,8 +77,7 @@
       data-decimal-digits="-1"
       data-legend-position="bottom"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       data-netdata="cgroup_webapp-app-1.net_packets_eth0"
@@ -93,8 +86,7 @@
       data-decimal-digits="-1"
       data-legend-position="bottom"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
 
     <h1>webapp-mysql-1</h1>
     <div class="netdata-chart-row">
@@ -114,8 +106,7 @@
         role="application"
         class="netdata-container-gauge"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         data-netdata="cgroup_webapp-mysql-1.mem_usage_limit"
         data-dimensions="used"
@@ -133,8 +124,7 @@
         role="application"
         class="netdata-container-gauge"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         data-netdata="cgroup_webapp-mysql-1.throttle_io"
         data-dimensions="read"
@@ -150,8 +140,7 @@
         role="application"
         class="netdata-container-gauge"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         data-netdata="cgroup_webapp-mysql-1.throttle_io"
         data-dimensions="write"
@@ -167,8 +156,7 @@
         role="application"
         class="netdata-container-gauge"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         class="netdata-container-gauge"
         data-netdata="cgroup_webapp-mysql-1.net_eth0"
@@ -181,8 +169,7 @@
         data-colors=""
         role="application"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         class="netdata-container-gauge"
         data-netdata="cgroup_webapp-mysql-1.net_eth0"
@@ -195,10 +182,8 @@
         data-colors=""
         role="application"
         style="width: 12%"
-      >
-      </div>
+      ></div>
     </div>
-
 
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
@@ -213,8 +198,7 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       id="chart_cgroup_webapp-mysql-1_mem_utilization"
@@ -228,8 +212,7 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       id="chart_cgroup_webapp-mysql-1_throttle_io"
@@ -243,8 +226,7 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       id="chart_cgroup_webapp-mysql-1_net_eth0"
@@ -258,8 +240,7 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
 
     <h1>webapp-nginx-1</h1>
     <div class="netdata-chart-row">
@@ -279,8 +260,7 @@
         role="application"
         class="netdata-container-gauge"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         data-netdata="cgroup_webapp-nginx-1.mem_usage_limit"
         data-dimensions="used"
@@ -298,8 +278,7 @@
         role="application"
         class="netdata-container-gauge"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         class="netdata-container-gauge"
         data-netdata="cgroup_webapp-nginx-1.net_eth0"
@@ -312,8 +291,7 @@
         data-colors=""
         role="application"
         style="width: 12%"
-      >
-      </div>
+      ></div>
       <div
         class="netdata-container-gauge"
         data-netdata="cgroup_webapp-nginx-1.net_eth0"
@@ -326,10 +304,8 @@
         data-colors=""
         role="application"
         style="width: 12%"
-      >
-      </div>
+      ></div>
     </div>
-
 
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
@@ -344,8 +320,7 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       id="chart_cgroup_webapp-nginx-1_mem_utilization"
@@ -359,8 +334,7 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
     <div
       class="netdata-container-with-legend netdata-container-with-legend--bottom"
       id="chart_cgroup_webapp-nginx-1_net_eth0"
@@ -374,7 +348,6 @@
       data-legend-position="bottom"
       role="application"
       style="height: 260px; width: 100%"
-    >
-    </div>
+    ></div>
   </body>
 </html>
