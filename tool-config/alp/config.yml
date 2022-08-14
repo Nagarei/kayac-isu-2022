@@ -5,24 +5,28 @@ query_string: true              # boolean
 output: count,5xx,method,uri,min,max,sum,avg,p99                    # string(comma separated)
 
 matching_groups:            # array
-  - /api/admin/tenants/add$
-  - /api/admin/tenants/billing
+  - /assets/*$
+  - /mypage$
   
-  - /api/organizer/players$
-  - /api/organizer/players/add$
-  - /api/organizer/player/[0-9a-f]+/disqualified$
+  - /playlist/[0-9a-f]+/edit$
+  - /$
+  - /playlist/[0-9a-f]+$
+  - /signup$
+  - /login$
   
-  - /api/organizer/competitions/add$
-  - /api/organizer/competition/[0-9a-f]+/finish$
-  - /api/organizer/competition/[0-9a-f]+/score$
-  - /api/organizer/billing$
-  - /api/organizer/competitions$
+  - /api/signup$
+  - /api/login$
+  - /api/logout$
+  - /api/recent_playlists$
+  - /api/popular_playlists$
+  - /api/playlists$
+  - /api/playlists/[0-9a-f]+$
+  - /api/playlist/add$
+  - /api/playlist/[0-9a-f]+/update$
+  - /api/playlist/[0-9a-f]+/delete$
+  - /api/playlist/[0-9a-f]+/favorite$
+  - /api/admin/user/ban$
 
-  - /api/player/player/[0-9a-f]+$
-  - /api/player/competition/[0-9a-f]+/ranking
-  - /api/player/competitions$
-
-  - /api/me$
   - /initialize$
 
 # file:                       # string
