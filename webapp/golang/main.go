@@ -346,9 +346,9 @@ func getSongByULID(ctx context.Context, db connOrTx, songULID string) (*SongRow,
 	return &row, nil
 }
 
-func isFavoritedBy(ctx context.Context, db connOrTx, userAccount string, playlistID int) (bool, error) {
+func isFavoritedBy(ctx context.Context, tx *sqlx.Tx, userAccount string, playlistID int) (bool, error) {
 	var count int
-	if err := db.GetContext(
+	if err := tx.GetContext(
 		ctx,
 		&count,
 		"SELECT COUNT(*) AS cnt FROM playlist_favorite where favorite_user_account = ? AND playlist_id = ?",
@@ -362,9 +362,9 @@ func isFavoritedBy(ctx context.Context, db connOrTx, userAccount string, playlis
 	return count > 0, nil
 }
 
-func getFavoritesCountByPlaylistID(ctx context.Context, db connOrTx, playlistID int) (int, error) {
+func getFavoritesCountByPlaylistID(ctx context.Context, tx *sqlx.Tx, playlistID int) (int, error) {
 	var count int
-	if err := db.GetContext(
+	if err := tx.GetContext(
 		ctx,
 		&count,
 		"SELECT count FROM favorite_count where playlist_id = ?",
@@ -397,9 +397,9 @@ func getSongsCountByPlaylistID(ctx context.Context, db connOrTx, playlistID int)
 	return count, nil
 }
 
-func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount string) ([]Playlist, error) {
+func getRecentPlaylistSummaries(ctx context.Context, tx *sqlx.Tx, userAccount string) ([]Playlist, error) {
 	playlists := make([]Playlist, 0, 100)
-	if err := db.SelectContext(
+	if err := tx.SelectContext(
 		ctx,
 		&playlists,
 		" SELECT pl.id as id, pl.ulid as ulid, pl.name as name, pl.is_public as is_public, pl.created_at as created_at, pl.updated_at as updated_at, display_name, account"+
@@ -425,11 +425,11 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 		// 	continue
 		// }
 
-		songCount, err := getSongsCountByPlaylistID(ctx, db, playlist.ID)
+		songCount, err := getSongsCountByPlaylistID(ctx, tx, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
 		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
+		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, tx, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: %w", err)
 		}
@@ -437,7 +437,7 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 		var isFavorited bool
 		if userAccount != anonUserAccount {
 			var err error
-			isFavorited, err = isFavoritedBy(ctx, db, userAccount, playlist.ID)
+			isFavorited, err = isFavoritedBy(ctx, tx, userAccount, playlist.ID)
 			if err != nil {
 				return nil, fmt.Errorf("error isFavoritedBy: %w", err)
 			}
@@ -462,12 +462,12 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 	return playlists, nil
 }
 
-func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount string) ([]Playlist, error) {
+func getPopularPlaylistSummaries(ctx context.Context, tx *sqlx.Tx, userAccount string) ([]Playlist, error) {
 	var popular []struct {
 		PlaylistID    int `db:"playlist_id"`
 		FavoriteCount int `db:"favorite_count"`
 	}
-	if err := db.SelectContext(
+	if err := tx.SelectContext(
 		ctx,
 		&popular,
 		`SELECT playlist_id, count AS favorite_count FROM favorite_count ORDER BY count DESC`,
@@ -487,7 +487,7 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 			break
 		}
 
-		playlist, err := getPlaylistByID(ctx, db, p.PlaylistID)
+		playlist, err := getPlaylistByID(ctx, tx, p.PlaylistID)
 		if err != nil {
 			return nil, fmt.Errorf("error getPlaylistByID: %w", err)
 		}
@@ -496,7 +496,7 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 			continue
 		}
 
-		user, err := getUserByAccount(ctx, db, playlist.UserAccount)
+		user, err := getUserByAccount(ctx, tx, playlist.UserAccount)
 		if err != nil {
 			return nil, fmt.Errorf("error getUserByAccount: %w", err)
 		}
@@ -505,11 +505,11 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 			continue
 		}
 
-		songCount, err := getSongsCountByPlaylistID(ctx, db, playlist.ID)
+		songCount, err := getSongsCountByPlaylistID(ctx, tx, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
 		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
+		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, tx, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: %w", err)
 		}
@@ -518,7 +518,7 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 		if userAccount != anonUserAccount {
 			// 認証済みの場合はfavを取得
 			var err error
-			isFavorited, err = isFavoritedBy(ctx, db, userAccount, playlist.ID)
+			isFavorited, err = isFavoritedBy(ctx, tx, userAccount, playlist.ID)
 			if err != nil {
 				return nil, fmt.Errorf("error isFavoritedBy: %w", err)
 			}
@@ -543,9 +543,9 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 	return playlists, nil
 }
 
-func getCreatedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx, userAccount string) ([]Playlist, error) {
+func getCreatedPlaylistSummariesByUserAccount(ctx context.Context, tx *sqlx.Tx, userAccount string) ([]Playlist, error) {
 	var playlists []PlaylistRow
-	if err := db.SelectContext(
+	if err := tx.SelectContext(
 		ctx,
 		&playlists,
 		"SELECT * FROM playlist where user_account = ? ORDER BY created_at DESC LIMIT 100",
@@ -560,7 +560,7 @@ func getCreatedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx, 
 		return nil, nil
 	}
 
-	user, err := getUserByAccount(ctx, db, userAccount)
+	user, err := getUserByAccount(ctx, tx, userAccount)
 	if err != nil {
 		return nil, fmt.Errorf("error getUserByAccount: %w", err)
 	}
@@ -570,15 +570,15 @@ func getCreatedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx, 
 
 	results := make([]Playlist, 0, len(playlists))
 	for _, row := range playlists {
-		songCount, err := getSongsCountByPlaylistID(ctx, db, row.ID)
+		songCount, err := getSongsCountByPlaylistID(ctx, tx, row.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
 		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, row.ID)
+		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, tx, row.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: err=%w", err)
 		}
-		isFavorited, err := isFavoritedBy(ctx, db, userAccount, row.ID)
+		isFavorited, err := isFavoritedBy(ctx, tx, userAccount, row.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error isFavoritedBy: %w", err)
 		}
@@ -599,9 +599,9 @@ func getCreatedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx, 
 	return results, nil
 }
 
-func getFavoritedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx, userAccount string) ([]Playlist, error) {
+func getFavoritedPlaylistSummariesByUserAccount(ctx context.Context, tx *sqlx.Tx, userAccount string) ([]Playlist, error) {
 	var playlistFavorites []PlaylistFavoriteRow
-	if err := db.SelectContext(
+	if err := tx.SelectContext(
 		ctx,
 		&playlistFavorites,
 		"SELECT * FROM playlist_favorite where favorite_user_account = ? ORDER BY created_at DESC",
@@ -615,7 +615,7 @@ func getFavoritedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx
 
 	playlists := make([]Playlist, 0, 100)
 	for _, fav := range playlistFavorites {
-		playlist, err := getPlaylistByID(ctx, db, fav.PlaylistID)
+		playlist, err := getPlaylistByID(ctx, tx, fav.PlaylistID)
 		if err != nil {
 			return nil, fmt.Errorf("error getPlaylistByID: %w", err)
 		}
@@ -623,7 +623,7 @@ func getFavoritedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx
 		if playlist == nil || !playlist.IsPublic {
 			continue
 		}
-		user, err := getUserByAccount(ctx, db, playlist.UserAccount)
+		user, err := getUserByAccount(ctx, tx, playlist.UserAccount)
 		if err != nil {
 			return nil, fmt.Errorf("error getUserByAccount: %w", err)
 		}
@@ -633,15 +633,15 @@ func getFavoritedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx
 			return nil, nil
 		}
 
-		songCount, err := getSongsCountByPlaylistID(ctx, db, playlist.ID)
+		songCount, err := getSongsCountByPlaylistID(ctx, tx, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
 		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
+		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, tx, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: err=%w", err)
 		}
-		isFavorited, err := isFavoritedBy(ctx, db, userAccount, playlist.ID)
+		isFavorited, err := isFavoritedBy(ctx, tx, userAccount, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error isFavoritedBy: %w", err)
 		}
@@ -665,8 +665,8 @@ func getFavoritedPlaylistSummariesByUserAccount(ctx context.Context, db connOrTx
 	return playlists, nil
 }
 
-func getPlaylistDetailByPlaylistULID(ctx context.Context, db connOrTx, playlistULID string, viewerUserAccount *string) (*PlaylistDetail, error) {
-	playlist, err := getPlaylistByULID(ctx, db, playlistULID)
+func getPlaylistDetailByPlaylistULID(ctx context.Context, tx *sqlx.Tx, playlistULID string, viewerUserAccount *string) (*PlaylistDetail, error) {
+	playlist, err := getPlaylistByULID(ctx, tx, playlistULID)
 	if err != nil {
 		return nil, fmt.Errorf("error getPlaylistByULID: %w", err)
 	}
@@ -674,7 +674,7 @@ func getPlaylistDetailByPlaylistULID(ctx context.Context, db connOrTx, playlistU
 		return nil, nil
 	}
 
-	user, err := getUserByAccount(ctx, db, playlist.UserAccount)
+	user, err := getUserByAccount(ctx, tx, playlist.UserAccount)
 	if err != nil {
 		return nil, fmt.Errorf("error getUserByAccount: %w", err)
 	}
@@ -682,14 +682,14 @@ func getPlaylistDetailByPlaylistULID(ctx context.Context, db connOrTx, playlistU
 		return nil, nil
 	}
 
-	favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
+	favoriteCount, err := getFavoritesCountByPlaylistID(ctx, tx, playlist.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error getFavoriteCountByPlaylistID: %w", err)
 	}
 	var isFavorited bool
 	if viewerUserAccount != nil {
 		var err error
-		isFavorited, err = isFavoritedBy(ctx, db, *viewerUserAccount, playlist.ID)
+		isFavorited, err = isFavoritedBy(ctx, tx, *viewerUserAccount, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error isFavoritedBy: %w", err)
 		}
@@ -757,9 +757,9 @@ func getPlaylistDetailByPlaylistULID(ctx context.Context, db connOrTx, playlistU
 	}, nil
 }
 
-func getPlaylistFavoritesByPlaylistIDAndUserAccount(ctx context.Context, db connOrTx, playlistID int, favoriteUserAccount string) (*PlaylistFavoriteRow, error) {
+func getPlaylistFavoritesByPlaylistIDAndUserAccount(ctx context.Context, tx *sqlx.Tx, playlistID int, favoriteUserAccount string) (*PlaylistFavoriteRow, error) {
 	var result []PlaylistFavoriteRow
-	if err := db.SelectContext(
+	if err := tx.SelectContext(
 		ctx,
 		&result,
 		"SELECT * FROM playlist_favorite WHERE `playlist_id` = ? AND `favorite_user_account` = ?",
@@ -1161,20 +1161,28 @@ func apiPlaylistsHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 	defer conn.Close()
-
-	createdPlaylists, err := getCreatedPlaylistSummariesByUserAccount(ctx, conn, userAccount)
+	tx, err := conn.BeginTxx(ctx, nil)
 	if err != nil {
+		c.Logger().Errorf("error conn.BeginTxx: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+
+	createdPlaylists, err := getCreatedPlaylistSummariesByUserAccount(ctx, tx, userAccount)
+	if err != nil {
+		tx.Rollback()
 		c.Logger().Errorf("error getCreatedPlaylistSummariesByUserAccount: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
 	if createdPlaylists == nil {
 		createdPlaylists = []Playlist{}
 	}
-	favoritedPlaylists, err := getFavoritedPlaylistSummariesByUserAccount(ctx, conn, userAccount)
+	favoritedPlaylists, err := getFavoritedPlaylistSummariesByUserAccount(ctx, tx, userAccount)
 	if err != nil {
+		tx.Rollback()
 		c.Logger().Errorf("error getFavoritedPlaylistSummariesByUserAccount: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
+	tx.Commit()
 
 	body := GetPlaylistsResponse{
 		BasicResponse: BasicResponse{
@@ -1223,8 +1231,19 @@ func apiPlaylistHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 	defer conn.Close()
+	tx, err := conn.BeginTxx(ctx, nil)
+	if err != nil {
+		c.Logger().Errorf("error conn.BeginTxx: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
+	transaction_ok := false
+	defer func() {
+		if !transaction_ok {
+			tx.Rollback()
+		}
+	}()
 
-	playlist, err := getPlaylistByULID(ctx, conn, playlistULID)
+	playlist, err := getPlaylistByULID(ctx, tx, playlistULID)
 	if err != nil {
 		c.Logger().Errorf("error getPlaylistByULID:  %s", err)
 		return errorResponse(c, 500, "internal server error")
@@ -1238,7 +1257,7 @@ func apiPlaylistHandler(c echo.Context) error {
 		return errorResponse(c, 404, "playlist not found")
 	}
 
-	playlistDetails, err := getPlaylistDetailByPlaylistULID(ctx, conn, playlist.ULID, &userAccount)
+	playlistDetails, err := getPlaylistDetailByPlaylistULID(ctx, tx, playlist.ULID, &userAccount)
 	if err != nil {
 		c.Logger().Errorf("error getPlaylistDetailByPlaylistULID:  %s", err)
 		return errorResponse(c, 500, "internal server error")
@@ -1246,6 +1265,8 @@ func apiPlaylistHandler(c echo.Context) error {
 	if playlistDetails == nil {
 		return errorResponse(c, 404, "playlist not found")
 	}
+	transaction_ok = true
+	tx.Commit()
 
 	body := SinglePlaylistResponse{
 		BasicResponse: BasicResponse{
@@ -1467,7 +1488,7 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 
-	playlistDetails, err := getPlaylistDetailByPlaylistULID(ctx, conn, playlist.ULID, &userAccount)
+	playlistDetails, err := getPlaylistDetailByPlaylistULID(ctx, tx, playlist.ULID, &userAccount)
 	if err != nil {
 		c.Logger().Errorf("error getPlaylistDetailByPlaylistULID: %s", err)
 		return errorResponse(c, 500, "internal server error")
@@ -1704,10 +1725,8 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 			return errorResponse(c, 500, "internal server error")
 		}
 	}
-	favorite_ok = true
-	tx.Commit()
 
-	playlistDetail, err := getPlaylistDetailByPlaylistULID(ctx, conn, playlist.ULID, &userAccount)
+	playlistDetail, err := getPlaylistDetailByPlaylistULID(ctx, tx, playlist.ULID, &userAccount)
 	if err != nil {
 		c.Logger().Errorf("error getPlaylistDetailByPlaylistULID: %s", err)
 		return errorResponse(c, 500, "internal server error")
@@ -1715,6 +1734,8 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 	if playlistDetail == nil {
 		return errorResponse(c, 404, "failed to fetch playlist detail")
 	}
+	favorite_ok = true
+	tx.Commit()
 
 	body := SinglePlaylistResponse{
 		BasicResponse: BasicResponse{
