@@ -362,6 +362,25 @@ func isFavoritedBy(ctx context.Context, tx *sqlx.Tx, userAccount string, playlis
 	return count > 0, nil
 }
 
+func getFavoritesCountByPlaylistID2(ctx context.Context, tx *sqlx.Tx, playlistID int) (int, error) {
+	var count int
+	if err := tx.GetContext(
+		ctx,
+		&count,
+		"SELECT count(*) FROM playlist_favorite where playlist_id = ?",
+		playlistID,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, fmt.Errorf(
+			"error Get count of favorite_count by playlist_id=%d: %w",
+			playlistID, err,
+		)
+	}
+	return count, nil
+}
+
 func getFavoritesCountByPlaylistID(ctx context.Context, tx *sqlx.Tx, playlistID int) (int, error) {
 	var count int
 	if err := tx.GetContext(
@@ -429,9 +448,9 @@ func getRecentPlaylistSummaries(ctx context.Context, tx *sqlx.Tx, userAccount st
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
 		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, tx, playlist.ID)
+		favoriteCount, err := getFavoritesCountByPlaylistID2(ctx, tx, playlist.ID)
 		if err != nil {
-			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: %w", err)
+			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID2: %w", err)
 		}
 
 		var isFavorited bool
