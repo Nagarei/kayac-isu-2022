@@ -1067,7 +1067,10 @@ func apiRecentPlaylistsHandler(c echo.Context) error {
 		c.Logger().Errorf("error getRecentPlaylistSummaries: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := GetRecentPlaylistsResponse{
 		BasicResponse: BasicResponse{
@@ -1118,7 +1121,10 @@ func apiPopularPlaylistsHandler(c echo.Context) error {
 		c.Logger().Errorf("error getPopularPlaylistSummaries: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := GetRecentPlaylistsResponse{
 		BasicResponse: BasicResponse{
@@ -1182,7 +1188,10 @@ func apiPlaylistsHandler(c echo.Context) error {
 		c.Logger().Errorf("error getFavoritedPlaylistSummariesByUserAccount: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := GetPlaylistsResponse{
 		BasicResponse: BasicResponse{
@@ -1266,7 +1275,10 @@ func apiPlaylistHandler(c echo.Context) error {
 		return errorResponse(c, 404, "playlist not found")
 	}
 	transaction_ok = true
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := SinglePlaylistResponse{
 		BasicResponse: BasicResponse{
@@ -1618,7 +1630,10 @@ func apiPlaylistDeleteHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 	favorite_ok = true
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := BasicResponse{
 		Result: true,
@@ -1689,6 +1704,10 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 	}
 
 	tx, err := conn.BeginTxx(ctx, nil)
+	if err != nil {
+		c.Logger().Errorf("error conn.BeginTxx: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 	favorite_ok := false
 	defer func() {
 		if !favorite_ok {
@@ -1713,10 +1732,6 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 		}
 	} else {
 		// delete
-		if err != nil {
-			c.Logger().Errorf("error conn.BeginTxx: %s", err)
-			return errorResponse(c, 500, "internal server error")
-		}
 		if _, err := tx.ExecContext(
 			ctx,
 			"DELETE FROM playlist_favorite WHERE `playlist_id` = ? AND `favorite_user_account` = ?",
@@ -1747,7 +1762,10 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 		return errorResponse(c, 404, "failed to fetch playlist detail")
 	}
 	favorite_ok = true
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := SinglePlaylistResponse{
 		BasicResponse: BasicResponse{
