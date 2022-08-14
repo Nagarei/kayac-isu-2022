@@ -5,29 +5,29 @@ query_string: true              # boolean
 output: count,5xx,method,uri,min,max,sum,avg,p99                    # string(comma separated)
 
 matching_groups:            # array
-  - /assets/*$
-  - /mypage$
+  - ^/assets/*$
+  - ^/mypage$
   
-  - /playlist/[0-9a-zA-Z]+/edit$
-  - /$
-  - /playlist/[0-9a-zA-Z]+$
-  - /signup$
-  - /login$
+  - ^/playlist/[0-9a-zA-Z]+/edit$
+  - ^/$
+  - ^/playlist/[0-9a-zA-Z]+$
+  - ^/signup$
+  - ^/login$
   
-  - /api/signup$
-  - /api/login$
-  - /api/logout$
-  - /api/recent_playlists$
-  - /api/popular_playlists$
-  - /api/playlists$
-  - /api/playlists/[0-9a-zA-Z]+$
-  - /api/playlist/add$
-  - /api/playlist/[0-9a-zA-Z]+/update$
-  - /api/playlist/[0-9a-zA-Z]+/delete$
-  - /api/playlist/[0-9a-zA-Z]+/favorite$
-  - /api/admin/user/ban$
+  - ^/api/signup$
+  - ^/api/login$
+  - ^/api/logout$
+  - ^/api/recent_playlists$
+  - ^/api/popular_playlists$
+  - ^/api/playlists$
+  - ^/api/playlists/[0-9a-zA-Z]+$
+  - ^/api/playlist/add$
+  - ^/api/playlist/[0-9a-zA-Z]+/update$
+  - ^/api/playlist/[0-9a-zA-Z]+/delete$
+  - ^/api/playlist/[0-9a-zA-Z]+/favorite$
+  - ^/api/admin/user/ban$
 
-  - /initialize$
+  - ^/initialize$
 
 # file:                       # string
 # query_string_ignore_values: # boolean
