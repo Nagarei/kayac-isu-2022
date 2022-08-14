@@ -1111,7 +1111,10 @@ func apiPopularPlaylistsHandler(c echo.Context) error {
 		c.Logger().Errorf("error getPopularPlaylistSummaries: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := GetRecentPlaylistsResponse{
 		BasicResponse: BasicResponse{
@@ -1578,7 +1581,10 @@ func apiPlaylistDeleteHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 	favorite_ok = true
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	body := BasicResponse{
 		Result: true,
@@ -1698,7 +1704,10 @@ func apiPlaylistFavoriteHandler(c echo.Context) error {
 		}
 	}
 	favorite_ok = true
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		c.Logger().Errorf("error tx.Commit: %s", err)
+		return errorResponse(c, 500, "internal server error")
+	}
 
 	playlistDetail, err := getPlaylistDetailByPlaylistULID(ctx, conn, playlist.ULID, &userAccount)
 	if err != nil {
