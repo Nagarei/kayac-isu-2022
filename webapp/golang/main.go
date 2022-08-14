@@ -1525,13 +1525,15 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 	// 	)
 	// 	return errorResponse(c, 500, "internal server error")
 	// }
-	if _, err := tx.NamedExecContext(
-		ctx,
-		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id) ON DUPLICATE KEY UPDATE `song_id`=VALUES(`song_id`)",
-		plSongs,
-	); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("error Insert playlist_song: %w", err)
+	if len(plSongs) > 0 {
+		if _, err := tx.NamedExecContext(
+			ctx,
+			"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id) ON DUPLICATE KEY UPDATE `song_id`=VALUES(`song_id`)",
+			plSongs,
+		); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("error Insert playlist_song: %w", err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
