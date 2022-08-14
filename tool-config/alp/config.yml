@@ -20,7 +20,7 @@ matching_groups:            # array
   - ^/api/recent_playlists$
   - ^/api/popular_playlists$
   - ^/api/playlists$
-  - ^/api/playlists/[0-9a-zA-Z]+$
+  - ^/api/playlist/[0-9a-zA-Z]+$
   - ^/api/playlist/add$
   - ^/api/playlist/[0-9a-zA-Z]+/update$
   - ^/api/playlist/[0-9a-zA-Z]+/delete$
