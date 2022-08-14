@@ -463,14 +463,17 @@ func getRecentPlaylistSummaries(ctx context.Context, db connOrTx, userAccount st
 }
 
 func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount string) ([]Playlist, error) {
-	var popular []struct {
-		PlaylistID    int `db:"playlist_id"`
-		FavoriteCount int `db:"favorite_count"`
-	}
+	playlists := make([]Playlist, 0, 100)
 	if err := db.SelectContext(
 		ctx,
-		&popular,
-		`SELECT playlist_id, count AS favorite_count FROM favorite_count ORDER BY count DESC`,
+		&playlists,
+		`SELECT
+		pl.id as id, pl.ulid as ulid, pl.name as name, pl.is_public as is_public, pl.created_at as created_at, pl.updated_at as updated_at,
+		display_name, account, count AS favorite_count
+		FROM favorite_count INNER JOIN playlist as pl ON pl.id = favorite_count.playlist_id
+		INNER JOIN user ON user.account = pl.user_account
+		WHERE favorite_count.count > 0 AND pl.is_public = true AND user.is_ban = false
+		ORDER BY count DESC LIMIT 100`,
 	); err != nil {
 		return nil, fmt.Errorf(
 			"error Select favorite_count: %w",
@@ -478,40 +481,14 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 		)
 	}
 
-	if len(popular) == 0 {
+	if len(playlists) == 0 {
 		return nil, nil
 	}
-	playlists := make([]Playlist, 0, len(popular))
-	for _, p := range popular {
-		if p.FavoriteCount == 0 {
-			break
-		}
-
-		playlist, err := getPlaylistByID(ctx, db, p.PlaylistID)
-		if err != nil {
-			return nil, fmt.Errorf("error getPlaylistByID: %w", err)
-		}
-		// 非公開プレイリストは除外
-		if playlist == nil || !playlist.IsPublic {
-			continue
-		}
-
-		user, err := getUserByAccount(ctx, db, playlist.UserAccount)
-		if err != nil {
-			return nil, fmt.Errorf("error getUserByAccount: %w", err)
-		}
-		// banされていたら除外
-		if user == nil || user.IsBan {
-			continue
-		}
+	for index, playlist := range playlists {
 
 		songCount, err := getSongsCountByPlaylistID(ctx, db, playlist.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error getSongsCountByPlaylistID: %w", err)
-		}
-		favoriteCount, err := getFavoritesCountByPlaylistID(ctx, db, playlist.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error getFavoritesCountByPlaylistID: %w", err)
 		}
 
 		var isFavorited bool
@@ -524,21 +501,8 @@ func getPopularPlaylistSummaries(ctx context.Context, db connOrTx, userAccount s
 			}
 		}
 
-		playlists = append(playlists, Playlist{
-			ULID:            playlist.ULID,
-			Name:            playlist.Name,
-			UserDisplayName: user.DisplayName,
-			UserAccount:     user.Account,
-			SongCount:       songCount,
-			FavoriteCount:   favoriteCount,
-			IsFavorited:     isFavorited,
-			IsPublic:        playlist.IsPublic,
-			CreatedAt:       playlist.CreatedAt,
-			UpdatedAt:       playlist.UpdatedAt,
-		})
-		if len(playlists) >= 100 {
-			break
-		}
+		playlists[index].SongCount = songCount
+		playlists[index].IsFavorited = isFavorited
 	}
 	return playlists, nil
 }
