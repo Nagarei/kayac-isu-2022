@@ -23,8 +23,8 @@ import (
 	"github.com/srinathgs/mysqlstore"
 	"golang.org/x/crypto/bcrypt"
 
-	_ "net/http/pprof"
 	"github.com/felixge/fgprof"
+	_ "net/http/pprof"
 )
 
 const (
@@ -81,7 +81,7 @@ func main() {
 
 	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
 	go func() {
-		log.Println(http.ListenAndServe(":6060", nil))
+		http.ListenAndServe(":6060", nil)
 	}()
 
 	e := echo.New()
