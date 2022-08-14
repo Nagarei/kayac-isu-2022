@@ -1419,22 +1419,22 @@ func apiPlaylistUpdateHandler(c echo.Context) error {
 		return errorResponse(c, 500, "internal server error")
 	}
 
-	// songsを削除→新しいものを入れる
-	if _, err := tx.ExecContext(
-		ctx,
-		"DELETE FROM playlist_song WHERE playlist_id = ?",
-		playlist.ID,
-	); err != nil {
-		tx.Rollback()
-		c.Logger().Errorf(
-			"error Delete playlist_song by id=%d: %s",
-			playlist.ID, err,
-		)
-		return errorResponse(c, 500, "internal server error")
-	}
+	// // songsを削除→新しいものを入れる
+	// if _, err := tx.ExecContext(
+	// 	ctx,
+	// 	"DELETE FROM playlist_song WHERE playlist_id = ?",
+	// 	playlist.ID,
+	// ); err != nil {
+	// 	tx.Rollback()
+	// 	c.Logger().Errorf(
+	// 		"error Delete playlist_song by id=%d: %s",
+	// 		playlist.ID, err,
+	// 	)
+	// 	return errorResponse(c, 500, "internal server error")
+	// }
 	if _, err := tx.NamedExecContext(
 		ctx,
-		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id)",
+		"INSERT INTO playlist_song (`playlist_id`, `sort_order`, `song_id`) VALUES (:playlist_id, :sort_order, :song_id) ON DUPLICATE KEY UPDATE song_id=:song_id",
 		plSongs,
 	); err != nil {
 		tx.Rollback()
