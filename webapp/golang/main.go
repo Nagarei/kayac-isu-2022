@@ -20,6 +20,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/motoki317/sc"
 	"github.com/oklog/ulid/v2"
 	"github.com/srinathgs/mysqlstore"
 	"golang.org/x/crypto/bcrypt"
@@ -133,6 +134,8 @@ func main() {
 		e.Logger.Fatalf("failed to initialize session store: %v", err)
 		return
 	}
+
+	initCacheRP()
 
 	port := getEnv("SERVER_APP_PORT", "3000")
 	e.Logger.Infof("starting listen80 server on : %s ...", port)
@@ -1017,6 +1020,35 @@ func apiLogoutHandler(c echo.Context) error {
 
 // GET /api/recent_playlists
 
+var cacheRP *sc.Cache[string, *GetRecentPlaylistsResponse]
+
+func initCacheRP() {
+	cacheRP, _ = sc.New(retrieveRP, 0, 0, sc.EnableStrictCoalescing())
+}
+
+func retrieveRP(ctx context.Context, userAccount string) (*GetRecentPlaylistsResponse, error) {
+	conn, err := db.Connx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	playlists, err := getRecentPlaylistSummaries(ctx, conn, userAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	body := GetRecentPlaylistsResponse{
+		BasicResponse: BasicResponse{
+			Result: true,
+			Status: 200,
+		},
+		Playlists: playlists,
+	}
+
+	return &body, nil
+}
+
 func apiRecentPlaylistsHandler(c echo.Context) error {
 	sess, err := getSession(c.Request())
 	if err != nil {
@@ -1029,27 +1061,34 @@ func apiRecentPlaylistsHandler(c echo.Context) error {
 		userAccount = _account.(string)
 	}
 
-	ctx := c.Request().Context()
-	conn, err := db.Connx(ctx)
+	// ctx := c.Request().Context()
+	// conn, err := db.Connx(ctx)
+	// if err != nil {
+	// 	c.Logger().Errorf("error db.Conn: %s", err)
+	// 	return errorResponse(c, 500, "internal server error")
+	// }
+	// defer conn.Close()
+
+	// playlists, err := getRecentPlaylistSummaries(ctx, conn, userAccount)
+	// if err != nil {
+	// 	c.Logger().Errorf("error getRecentPlaylistSummaries: %s", err)
+	// 	return errorResponse(c, 500, "internal server error")
+	// }
+
+	// body := GetRecentPlaylistsResponse{
+	// 	BasicResponse: BasicResponse{
+	// 		Result: true,
+	// 		Status: 200,
+	// 	},
+	// 	Playlists: playlists,
+	// }
+
+	body, err := cacheRP.Get(context.Background(), userAccount)
 	if err != nil {
-		c.Logger().Errorf("error db.Conn: %s", err)
+		c.Logger().Errorf("error apiRecentPlaylistsHandler: %s", err)
 		return errorResponse(c, 500, "internal server error")
 	}
-	defer conn.Close()
 
-	playlists, err := getRecentPlaylistSummaries(ctx, conn, userAccount)
-	if err != nil {
-		c.Logger().Errorf("error getRecentPlaylistSummaries: %s", err)
-		return errorResponse(c, 500, "internal server error")
-	}
-
-	body := GetRecentPlaylistsResponse{
-		BasicResponse: BasicResponse{
-			Result: true,
-			Status: 200,
-		},
-		Playlists: playlists,
-	}
 	if err := c.JSON(http.StatusOK, body); err != nil {
 		c.Logger().Errorf("error returns JSON: %s", err)
 		return errorResponse(c, 500, "internal server error")
